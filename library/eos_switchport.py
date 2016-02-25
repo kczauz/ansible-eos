@@ -564,12 +564,26 @@ def set_trunk_native_vlan(module):
 
 def set_trunk_allowed_vlans(module):
     """Configures the trunk allowed vlans attribute for the switchport
+       reconcile what exists on the switch, and what is requested, and only 
+       do add/remove operations
     """
     name = module.attributes['name']
     value = module.attributes['trunk_allowed_vlans']
-    module.log('Invoked set_trunk_allowed_vlans for eos_switchport[%s] '
-               'with value %s' % (name, value))
-    module.node.api('switchports').set_trunk_allowed_vlans(name, value)
+    vlans_on_switch = module._instance['trunk_allowed_vlans']
+
+    # get list of vlans that only exist on the switch
+    vlans_to_add = [ _ for _ in set(value.split(',')).difference(vlans_on_switch.split(',')) ]
+    for trunk_group in vlans_to_add:
+        module.log('Invoked add_trunk_group eos_switchport[%s] '
+                   'with value %s' % (name, trunk_group))
+        module.node.config(['interface %s' %name, 'switchport trunk allowed vlan add %s' %trunk_group])
+
+    # get list of vlans that only exist on the config
+    vlans_to_remove = [ _ for _ in set(vlans_on_switch.split(',')).difference(set(value.split(','))) ]
+    for trunk_group in vlans_to_remove:
+        module.log('Invoked remove_trunk_group eos_switchport[%s] '
+                   'with value %s' % (name, trunk_group))
+        module.node.config(['interface %s' %name, 'switchport trunk allowed vlan remove %s' %trunk_group])
 
 def set_trunk_groups(module):
     """Configures the set of trunk groups on the interface
