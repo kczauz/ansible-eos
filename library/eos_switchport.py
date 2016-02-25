@@ -569,19 +569,20 @@ def set_trunk_allowed_vlans(module):
     """
     name = module.attributes['name']
     value = module.attributes['trunk_allowed_vlans']
+    # get list of trunk_allowed_vlans that currently exist on the switch
     vlans_on_switch = module._instance['trunk_allowed_vlans']
 
-    # get list of vlans that only exist on the switch
+    # vlans that exist only on the switch and are not in the ansible config
     vlans_to_add = [ _ for _ in set(value.split(',')).difference(vlans_on_switch.split(',')) ]
     for trunk_group in vlans_to_add:
-        module.log('Invoked add_trunk_group eos_switchport[%s] '
+        module.log('Invoked trunk allowed vlan add on eos_switchport[%s] '
                    'with value %s' % (name, trunk_group))
         module.node.config(['interface %s' %name, 'switchport trunk allowed vlan add %s' %trunk_group])
 
-    # get list of vlans that only exist on the config
+    # vlans that exist only in the ansible config and are not on the switch
     vlans_to_remove = [ _ for _ in set(vlans_on_switch.split(',')).difference(set(value.split(','))) ]
     for trunk_group in vlans_to_remove:
-        module.log('Invoked remove_trunk_group eos_switchport[%s] '
+        module.log('Invoked trunk allowed vlan remove on eos_switchport[%s] '
                    'with value %s' % (name, trunk_group))
         module.node.config(['interface %s' %name, 'switchport trunk allowed vlan remove %s' %trunk_group])
 
