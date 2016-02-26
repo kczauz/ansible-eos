@@ -575,7 +575,7 @@ def set_trunk_allowed_vlans(module):
     # start with one trunk allowed vlan on the switch if the switchport 
     # is in the default state (all vlans allowed)
     if ( len(vlans_on_switch.split(',')) == 4094 ):
-        one_vlan = value.split(',')[1]
+        one_vlan = value.split(',')[0]
         module.log('Invoked set_trunk_allowed_vlans for eos_switchport[%s] '
                    'with value %s' % (name, one_vlan) )
         module.node.api('switchports').set_trunk_allowed_vlans(name, one_vlan)
